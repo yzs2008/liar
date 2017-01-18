@@ -1,22 +1,35 @@
 package com.kaidi.swallow;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import org.apache.commons.io.FilenameUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.logging.FileHandler;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class Liar {
 
 
-    private int bufferSize = 1024 * 10;
+    // 文件读取处理时的缓存大小
+    private int bufferSize = 1024 * 4;
 
+    // 排除目录列表
     private List<String> excludePath = new ArrayList<>();
+    // 排除文件列表
+    private List<String> excludeFile = new ArrayList<>();
+    // 排除文件类型列表，使用后缀标志
+    private List<String> excludeExtension = new ArrayList<>();
+
+    // 配置文件地址
+    private String configFilePath;
+
+    // 口令, -128-127
+    private int key;
+
+    // 是否显示详细标志.true@显示；false@不显示
+    private boolean verbose;
 
     public void scan(String path, List<File> all) throws IOException {
         File scanner = new File(path);
@@ -24,17 +37,31 @@ public class Liar {
         if (filesInPath != null) {
             for (File f : filesInPath) {
                 if (f.isDirectory()) {
-                    if(excludePath.contains(f.getPath())){
-                        continue;
-                    }else {
+                    if (filterDirectory(f)) {
                         scan(f.getPath(), all);
+                    } else {
+                        continue;
                     }
                 }
                 if (f.isFile()) {
-                    all.add(f);
+                    if (filterFile(f)) {
+                        all.add(f);
+                    } else {
+                        continue;
+                    }
                 }
             }
         }
+    }
+
+    private boolean filterFile(File f) {
+        String extension = FilenameUtils.getExtension(f.getPath());
+        String fileName = f.getName();
+        return !(excludeExtension.contains(extension) || excludeFile.contains(fileName));
+    }
+
+    private boolean filterDirectory(File f) {
+        return !excludePath.contains(f.getName());
     }
 
 
@@ -68,7 +95,9 @@ public class Liar {
                 if (count == -1) break;
 
                 for (int i = 0; i < count; i++) {
-                    buffer[i] ^= 20;
+                    if(buffer[i] != '\n'){
+                        buffer[i] ^= 20;
+                    }
                 }
                 out.write(buffer, 0, count);
             }
@@ -97,6 +126,12 @@ public class Liar {
     }
 
     public String nightMan(String path) {
+        excludeExtension.add("md");
+        excludeFile.add(".gitignore");
+        excludePath.add(".idea");
+        excludePath.add(".git");
+        excludePath.add("log");
+        excludePath.add("node_modules");
         return path;
     }
 

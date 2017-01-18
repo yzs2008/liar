@@ -15,7 +15,8 @@ public class Application {
     public static void main(String[] args) {
         try {
             Liar liar = new Liar();
-            String path = "/home/kaidi/study/";
+            liar.nightMan("");
+            String path = "/home/kaidi/study/nodeStudy";
             List<File> files = new ArrayList<>();
 
             liar.scan(path, files);
@@ -23,6 +24,7 @@ public class Application {
             for (File f : files) {
                 System.out.println(f.getPath());
             }
+            liar.lie(files);
 
         } catch (IOException e) {
 
